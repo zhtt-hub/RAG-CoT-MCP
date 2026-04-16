@@ -1,0 +1,38 @@
+"""
+Algorithm 1: RAG-CoT-MCP Execution Loop
+Core Engine: GLM-4.7
+Hyperparameters: temperature = 0.1, top_p = 0.9, max_retries (\tau_{max}) = 3
+"""
+
+def execute_rag_cot_mcp(query_q, tau_max=3):
+    H = [query_q] 
+    
+    while not task_completed(H):
+        z_t = GLM47_Brain.generate_cot_reasoning(context=H, temperature=0.1)
+        
+        a_t = GLM47_Brain.generate_candidate_action(context=H, reasoning=z_t)
+        
+        retry_count = 0
+        action_resolved = False
+        
+        while retry_count < tau_max and not action_resolved:
+            is_valid, error_trace_epsilon = MCP_Standard_System.validate_schema(a_t)
+            
+            if is_valid:
+                observation = MCP_Standard_System.execute_tool(a_t)
+                
+                H.append({'reasoning': z_t, 'action': a_t, 'result': observation})
+                action_resolved = True
+                
+            else:
+                H.append({'reasoning': z_t, 'action': a_t, 'error': error_trace_epsilon})
+                retry_count += 1
+                
+                if retry_count < tau_max:
+                    z_t = GLM47_Brain.generate_cot_reasoning(context=H)
+                    a_t = GLM47_Brain.generate_candidate_action(context=H, reasoning=z_t)
+                else:
+                    return "System Abort: Unrecoverable syntax error after max retries."
+                    
+    final_answer = GLM47_Brain.synthesize_final_output(H)
+    return final_answer
