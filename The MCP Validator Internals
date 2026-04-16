@@ -1,0 +1,40 @@
+"""
+mcp_validator.py
+Demonstrates the deterministic validation function V(a_t) and error trace generation.
+"""
+import jsonschema
+
+class MCPProtocolLayer:
+    def __init__(self, registered_schemas):
+        self.valid_action_space = registered_schemas 
+
+    def validate_action(self, proposed_action_a_t):
+        """
+        Implements Equation 3: V(a_t)
+        Returns (is_valid: bool, trace: dict)
+        """
+        tool_name = proposed_action_a_t.get("tool_name")
+        payload = proposed_action_a_t.get("parameters", {})
+
+        if tool_name not in self.valid_action_space:
+            epsilon_error = {
+                "error_type": "EndpointHallucination",
+                "message": f"Tool '{tool_name}' does not exist in the valid MCP action space.",
+                "available_tools": list(self.valid_action_space.keys())
+            }
+            return False, epsilon_error
+
+        target_schema = self.valid_action_space[tool_name]
+
+        try:
+            jsonschema.validate(instance=payload, schema=target_schema)
+            return True, proposed_action_a_t 
+            
+        except jsonschema.exceptions.ValidationError as e:
+            epsilon_error = {
+                "error_type": "SchemaViolation",
+                "message": e.message,
+                "failed_path": list(e.path),
+                "required_schema": target_schema["parameters"]
+            }
+            return False, epsilon_error
