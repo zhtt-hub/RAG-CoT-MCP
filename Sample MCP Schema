@@ -1,0 +1,29 @@
+{
+  "name": "query_qasper_academic_database",
+  "description": "Executes a semantic search over the Qasper academic full-text database. Intercepts missing parameters or malformed queries before network execution.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "search_query": {
+        "type": "string",
+        "description": "The exact multi-hop logical question extracted from the CoT reasoning phase."
+      },
+      "top_k_documents": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5,
+        "description": "Number of reference papers to retrieve. Must be an integer between 1 and 5."
+      },
+      "require_full_text": {
+        "type": "boolean",
+        "description": "Strict boolean flag to determine if the abstract or full text is returned."
+      }
+    },
+    "required": [
+      "search_query",
+      "top_k_documents",
+      "require_full_text"
+    ],
+    "additionalProperties": false
+  }
+}
