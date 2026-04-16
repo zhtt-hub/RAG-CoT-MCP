@@ -1,0 +1,35 @@
+class SymbolicProtocolLayer:
+    def __init__(self, mcp_server):
+        self.mcp = mcp_server
+
+    def deterministic_validation(self, a_t: dict) -> tuple:
+        """
+        Implements Equation (3): V(a_t)
+        Strict schema check. Returns (is_valid, payload_or_error)
+        """
+        if self.mcp.schema_check(a_t) == True:
+            return (True, a_t)
+        else:
+            epsilon_error = self.mcp.generate_error_trace(a_t)
+            return (False, epsilon_error)
+
+class StateManager:
+    @staticmethod
+    def update_history(H_prev: list, z_t: str, a_t: dict, epsilon_error=None) -> list:
+        """
+        Implements Equation (4): H_t = H_{t-1} \oplus <z_t, a_t, \epsilon_{error}>
+        Injects the symbolic corrective signal directly back into the state space.
+        """
+        current_step_record = {
+            "latent_reasoning": z_t,
+            "attempted_action": a_t,
+        }
+        
+        if epsilon_error
+            current_step_record["symbolic_feedback"] = epsilon_error
+            current_step_record["status"] = "Rejected by MCP"
+        else:
+            current_step_record["status"] = "Execution Successful"
+            
+        H_prev.append(current_step_record)
+        return H_prev
