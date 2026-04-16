@@ -1,0 +1,24 @@
+class NeuralPlanner:
+    def __init__(self, model_engine="GLM-4.7", temperature=0.1):
+        self.theta = model_engine
+        self.temp = temperature
+
+    def sample_latent_trajectory(self, q: str, H_prev: list) -> str:
+        """
+        Implements Equation (1): z_t ~ P_\theta(z_t | q, H_{t-1})
+        The model acts as a cognitive prior, reasoning freely in latent space.
+        """
+        system_prompt = "You are a logical reasoning agent. Generate a step-by-step Chain-of-Thought (CoT) to solve the current query based on history."
+        
+        z_t = self._call_llm(system_prompt, q, H_prev, mode="reasoning")
+        return z_t
+
+    def generate_candidate_action(self, q: str, H_prev: list, z_t: str) -> dict:
+        """
+        Implements Equation (2): a_t ~ P_\theta(a_t | q, H_{t-1}, z_t)
+        The unconstrained action space A, conditioned heavily on the latent CoT (z_t).
+        """
+        action_prompt = f"Based on your reasoning: {z_t}, output the next exact tool call."
+        
+        a_t = self._call_llm(action_prompt, q, H_prev, mode="action_generation")
+        return a_t
