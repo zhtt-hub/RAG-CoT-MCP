@@ -1,0 +1,26 @@
+def execute_bounded_logical_step(query: str, history: list, planner: NeuralPlanner, protocol: SymbolicProtocolLayer, tau_max: int = 3):
+    """
+    Ensures O(N * tau_max) worst-case time complexity.
+    Prevents infinite recovery loops caused by P_e (hallucination probability).
+    """
+    retry_count = 0
+    
+    while retry_count < tau_max:
+        # Eq 1 & 2: Generate probabilistic reasoning and action
+        z_t = planner.sample_latent_trajectory(query, history)
+        a_t = planner.generate_candidate_action(query, history, z_t)
+        
+        is_valid, result = protocol.deterministic_validation(a_t)
+        
+        if is_valid:
+            observation = protocol.mcp.execute(result)
+            history = StateManager.update_history(history, z_t, a_t, epsilon_error=None)
+            history.append({"observation": observation})
+            return True, history
+            
+        else:
+            epsilon_error = result
+            history = StateManager.update_history(history, z_t, a_t, epsilon_error)
+            retry_count += 1  # Increment counter towards \tau_{max}
+            
+    return False, {"System_Abort": f"Failed after {tau_max} deterministic interceptions."}
