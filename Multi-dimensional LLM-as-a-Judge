@@ -1,0 +1,27 @@
+def generate_judge_prompt(question, reference_context, answer_model_A, answer_model_B):
+    prompt = f"""
+    You are an impartial, expert academic judge evaluating two AI systems on a complex multi-hop retrieval task. 
+    You will be provided with a Question, the Ground Truth/Reference Context, and two anonymized Answers (Model A and Model B).
+
+    [Question]: {question}
+    [Reference Context]: {reference_context}
+    
+    [Model A's Answer]: {answer_model_A}
+    [Model B's Answer]: {answer_model_B}
+
+    Please evaluate both models blindly across the following three dimensions on a scale of 1 to 10:
+    1. Comprehensiveness: Does the response cover all necessary multi-hop evidence and implicit relationships?
+    2. Factuality & Accuracy: Does the answer strictly adhere to the reference context without hallucinating data or API results?
+    3. Logical Coherence: Is the reasoning chain fluid and sound from the query to the final synthesis?
+
+    Finally, provide an 'Overall Preference' (Model A, Model B, or Tie).
+    
+    Output your evaluation in strict JSON format:
+    {{
+        "Model_A_Scores": {{"Comprehensiveness": int, "Factuality": int, "Logical_Coherence": int}},
+        "Model_B_Scores": {{"Comprehensiveness": int, "Factuality": int, "Logical_Coherence": int}},
+        "Justification": "Brief explanation of the scoring.",
+        "Overall_Preference": "Model A" | "Model B" | "Tie"
+    }}
+    """
+    return prompt
