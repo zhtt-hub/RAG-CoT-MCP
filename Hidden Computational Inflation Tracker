@@ -1,0 +1,37 @@
+import time
+
+class RAGExecutionTracker:
+    def __init__(self):
+        self.metrics = {
+            "t_planning_tokens": 0,    
+            "t_recovery_tokens": 0,   
+            "api_attempts": 0,         
+            "network_failures": 0,     
+            "l_api_latency_sec": 0.0, 
+            "start_time": time.time()
+        }
+
+    def log_planning_phase(self, tokens_used, is_recovery=False):
+        if is_recovery:
+            self.metrics["t_recovery_tokens"] += tokens_used
+        else:
+            self.metrics["t_planning_tokens"] += tokens_used
+
+    def log_api_execution(self, latency, is_success):
+        self.metrics["api_attempts"] += 1
+        self.metrics["l_api_latency_sec"] += latency
+        if not is_success:
+            self.metrics["network_failures"] += 1
+
+    def calculate_total_cost(self):
+        """
+        Cost = T_{planning} + \sum_{i=1}^{C} T_{recovery}^i + L_{API}
+        """
+        total_time = time.time() - self.metrics["start_time"]
+        failure_rate = (self.metrics["network_failures"] / self.metrics["api_attempts"]) * 100
+        
+        return {
+            "total_latency": total_time,
+            "token_overhead": self.metrics["t_recovery_tokens"],
+            "api_failure_rate": failure_rate
+        }
